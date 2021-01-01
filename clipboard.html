@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clipboard</title>
+  </head>
+  <body>
+    <div id="container">
+      <img src="http://cdn.semlinker.com/abao.png" width="80" height="80" />
+      <p>hello,world</p>
+    </div>
+    <button onclick="writeDataToClipboard()">复制</button>
+    <button onclick="readDataFromClipboard()">粘贴</button>
+
+    <button onclick="copyPageUrl()">拷贝页面地址</button>
+    <button onclick="getClipboardContents()">读取页面地址</button>
+
+    <div class="editor"></div>
+
+    <script>
+      // * 剪切板授权
+      // askWritePermission();
+
+      async function askWritePermission() {
+        try {
+          const { state } = await navigator.permissions.query({
+            name: 'clipboard-write',
+          });
+          return state === 'granted';
+        } catch (error) {
+          return false;
+        }
+      }
+
+      async function askReadPermission() {
+        try {
+          const { state } = await navigator.permissions.query({
+            name: 'clipboard-read',
+          });
+          return state === 'granted';
+        } catch (error) {
+          return false;
+        }
+      }
+
+      async function copyPageUrl() {
+        try {
+          await navigator.clipboard.writeText(location.href);
+          console.log('页面地址已经被拷贝到剪贴板中');
+        } catch (err) {
+          console.error('页面地址拷贝失败: ', err);
+        }
+      }
+
+      async function getClipboardContents() {
+        try {
+          const text = await navigator.clipboard.readText();
+          console.log('已读取剪贴板中的内容：', text);
+        } catch (err) {
+          console.error('读取剪贴板内容失败: ', err);
+        }
+      }
+
+      async function createImageBlob(url) {
+        const response = await fetch(url);
+        return await response.blob();
+      }
+
+      function createTextBlob(text) {
+        return new Blob([text], { type: 'text/plain' });
+      }
+
+      async function writeDataToClipboard() {
+        if (askWritePermission()) {
+          if (navigator.clipboard && navigator.clipboard.write) {
+            const textBlob = createTextBlob('hello world');
+            const imageBlob = await createImageBlob('http://cdn.semlinker.com/abao.png');
+            try {
+              const item = new ClipboardItem({
+                [textBlob.type]: textBlob,
+                [imageBlob.type]: imageBlob,
+              });
+              select(document.querySelector('#container'));
+              await navigator.clipboard.write([item]);
+              console.log('文本和图像复制成功');
+            } catch (error) {
+              console.error('文本和图像复制失败', error);
+            }
+          }
+        }
+      }
+
+      async function readDataFromClipboard() {
+        if (askReadPermission()) {
+          if (navigator.clipboard && navigator.clipboard.read) {
+            try {
+              const clipboardItems = await navigator.clipboard.read();
+              for (const clipboardItem of clipboardItems) {
+                console.dir(clipboardItem);
+                for (const type of clipboardItem.types) {
+                  const blob = await clipboardItem.getType(type);
+                  console.log('已读取剪贴板中的内容：', await blob.text());
+                }
+              }
+            } catch (err) {
+              console.error('读取剪贴板内容失败: ', err);
+            }
+          }
+        }
+      }
+
+      function select(element) {
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+    </script>
+  </body>
+</html>
