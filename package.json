@@ -2,7 +2,6 @@
   "name": "test_module",
   "version": "1.0.0",
   "main": "index.js",
-  "type": "module",
   "repository": "https://github.com/RainWangjie/test_moudle.git",
   "author": "wj.ge <wj.ge@tianrang-inc.com>",
   "license": "MIT",
